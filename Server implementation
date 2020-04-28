@@ -1,0 +1,58 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+class FileServer {
+public static void main(String args[]) throws IOException {
+System.out.println("Starting FileServer...");
+DateiServer myServer = new DateiServer();
+}
+}
+class DateiServer {
+public DateiServer() throws IOException {
+ServerSocket serversocket = new ServerSocket (8181);
+while (true) {
+Socket socket = serversocket.accept();
+Thread bearbeiteAnfrage = new BedienerThread(socket);
+bearbeiteAnfrage.start();
+}
+}
+}
+class BedienerThread extends Thread {
+private Socket mySocket;
+public BedienerThread(Socket so) {
+mySocket = so;
+}
+public void run() {
+BufferedReader fromClient;
+BufferedWriter toClient;
+BufferedReader dateiLeser;
+try {
+// Oeffne den Eingabestrom vom Client
+fromClient = new BufferedReader(new InputStreamReader
+(mySocket.getInputStream()));
+// Oeffne den Ausgabestrom zum Client
+toClient = new BufferedWriter(new OutputStreamWriter
+(mySocket.getOutputStream()));
+// Oeffnen der uebertragenen Datei
+String liesDatei = fromClient.readLine();
+StringTokenizer strToken = new StringTokenizer
+(liesDatei, " \r\n");
+// Clientnamen ermitteln
+String clientName = strToken.nextToken();
+String dateiName = strToken.nextToken();
+dateiLeser = new BufferedReader(new FileReader (dateiName));
+System.out.println("Bearbeite Anfrage Client " + clientName);
+int c = dateiLeser.read();
+while( c != -1) {
+toClient.write(c);
+c = dateiLeser.read();
+}
+dateiLeser.close();
+toClient.flush();
+System.out.println("Beende Anfrage Client " + clientName);
+mySocket.close();
+} catch (Exception e) {
+System.out.println("Fehler beim Lesen der Datei");
+}
+}
+}
